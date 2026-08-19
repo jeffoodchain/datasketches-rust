@@ -24,3 +24,6 @@ pub use self::resize::ResizeFactor;
 
 #[cfg(any(feature = "cpc", feature = "hll"))]
 pub(crate) mod inv_pow2;
+
+#[cfg(feature = "req")]
+pub(crate) mod random;

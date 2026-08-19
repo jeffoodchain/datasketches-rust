@@ -52,6 +52,9 @@ pub use self::thetafamily::theta;
 #[cfg(feature = "tuple")]
 pub use self::thetafamily::tuple;
 
+#[cfg(feature = "req")]
+pub mod req;
+
 // common modules
 pub mod codec;
 pub mod common;
