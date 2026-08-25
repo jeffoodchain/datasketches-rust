@@ -384,15 +384,20 @@ where
         // level index), so rejecting anything else keeps `nominal_capacity` and
         // `weight` from overflowing on crafted input.
         if !(0.0..=super::MAX_K as f32).contains(&section_size_raw) {
-            return Err(Error::invalid_argument(format!(
+            return Err(Error::deserial(format!(
                 "REQ compactor section_size {section_size_raw} out of range"
             )));
         }
         // `weight()` computes `1u64 << lg_weight`, which overflows once lg_weight ≥ 64.
         if lg_weight >= 64 {
-            return Err(Error::invalid_argument(format!(
+            return Err(Error::deserial(format!(
                 "REQ compactor lg_weight {lg_weight} exceeds maximum"
             )));
+        }
+        if num_sections == 0 {
+            return Err(Error::deserial(
+                "REQ compactor num_sections must be nonzero",
+            ));
         }
 
         // Don't trust `num_items` for the allocation: a malformed length could request

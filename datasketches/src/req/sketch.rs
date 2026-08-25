@@ -606,19 +606,19 @@ impl<T: ReqValue> ReqSketch<T> {
             RankAccuracy::LowRank
         };
         if !(MIN_K..=MAX_K).contains(&k) || k % 2 != 0 {
-            return Err(Error::invalid_argument(format!(
+            return Err(Error::deserial(format!(
                 "k {k} is not a valid REQ k value"
             )));
         }
 
         if is_empty {
             if num_levels != 0 {
-                return Err(Error::invalid_argument(format!(
+                return Err(Error::deserial(format!(
                     "empty REQ sketch must have 0 levels, got {num_levels}"
                 )));
             }
             if num_raw_items != 0 {
-                return Err(Error::invalid_argument(format!(
+                return Err(Error::deserial(format!(
                     "empty REQ sketch must have 0 raw items, got {num_raw_items}"
                 )));
             }
@@ -626,24 +626,24 @@ impl<T: ReqValue> ReqSketch<T> {
         }
 
         if num_levels == 0 {
-            return Err(Error::invalid_argument(
+            return Err(Error::deserial(
                 "non-empty REQ sketch must have at least one level",
             ));
         }
 
         if raw_items {
             if num_levels != 1 {
-                return Err(Error::invalid_argument(format!(
+                return Err(Error::deserial(format!(
                     "raw-items REQ sketch must have exactly 1 level, got {num_levels}"
                 )));
             }
             if num_raw_items == 0 || num_raw_items as u64 > RAW_ITEMS_THRESHOLD {
-                return Err(Error::invalid_argument(format!(
+                return Err(Error::deserial(format!(
                     "raw-items REQ sketch must contain 1..={RAW_ITEMS_THRESHOLD} items, got {num_raw_items}"
                 )));
             }
         } else if num_raw_items != 0 {
-            return Err(Error::invalid_argument(format!(
+            return Err(Error::deserial(format!(
                 "non-raw REQ sketch must have 0 raw items, got {num_raw_items}"
             )));
         }
@@ -673,6 +673,12 @@ impl<T: ReqValue> ReqSketch<T> {
             for i in 0..num_levels {
                 let level_sorted = if i == 0 { is_level_zero_sorted } else { true };
                 let c = Compactor::<T>::deserialize(&mut cursor, rank_accuracy, level_sorted)?;
+                if c.lg_weight() != i as u8 {
+                    return Err(Error::deserial(format!(
+                        "REQ compactor lg_weight {} does not match level index {i}",
+                        c.lg_weight(),
+                    )));
+                }
                 compactors.push(c);
             }
         }
@@ -698,8 +704,26 @@ impl<T: ReqValue> ReqSketch<T> {
             }
         }
 
+        if num_levels > 1 {
+            let mut weighted_sum: u64 = 0;
+            for c in &compactors {
+                weighted_sum = weighted_sum
+                    .checked_add(
+                        c.weight()
+                            .checked_mul(c.num_items() as u64)
+                            .ok_or_else(|| Error::deserial("REQ weighted item count overflow"))?,
+                    )
+                    .ok_or_else(|| Error::deserial("REQ weighted item count overflow"))?;
+            }
+            if weighted_sum != n {
+                return Err(Error::deserial(format!(
+                    "REQ stream length {n} does not match weighted retained count {weighted_sum}",
+                )));
+            }
+        }
+
         if n == 0 || min_item.is_none() || max_item.is_none() {
-            return Err(Error::invalid_argument(
+            return Err(Error::deserial(
                 "non-empty REQ sketch contains no items",
             ));
         }
