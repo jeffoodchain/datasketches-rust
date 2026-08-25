@@ -606,9 +606,7 @@ impl<T: ReqValue> ReqSketch<T> {
             RankAccuracy::LowRank
         };
         if !(MIN_K..=MAX_K).contains(&k) || k % 2 != 0 {
-            return Err(Error::deserial(format!(
-                "k {k} is not a valid REQ k value"
-            )));
+            return Err(Error::deserial(format!("k {k} is not a valid REQ k value")));
         }
 
         if is_empty {
@@ -723,9 +721,7 @@ impl<T: ReqValue> ReqSketch<T> {
         }
 
         if n == 0 || min_item.is_none() || max_item.is_none() {
-            return Err(Error::deserial(
-                "non-empty REQ sketch contains no items",
-            ));
+            return Err(Error::deserial("non-empty REQ sketch contains no items"));
         }
 
         let mut sketch = ReqSketch::try_new(k, rank_accuracy)?;
