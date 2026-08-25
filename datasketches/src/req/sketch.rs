@@ -671,7 +671,7 @@ impl<T: ReqValue> ReqSketch<T> {
             for i in 0..num_levels {
                 let level_sorted = if i == 0 { is_level_zero_sorted } else { true };
                 let c = Compactor::<T>::deserialize(&mut cursor, rank_accuracy, level_sorted)?;
-                if c.lg_weight() != i as u8 {
+                if c.lg_weight() != i {
                     return Err(Error::deserial(format!(
                         "REQ compactor lg_weight {} does not match level index {i}",
                         c.lg_weight(),
