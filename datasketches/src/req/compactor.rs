@@ -92,6 +92,11 @@ where
         }
     }
 
+    /// Returns the level (log weight) of this compactor
+    pub(super) fn lg_weight(&self) -> u8 {
+        self.lg_weight
+    }
+
     /// Returns the number of items currently in this compactor.
     pub(super) fn num_items(&self) -> u32 {
         self.items.len() as u32
@@ -478,11 +483,6 @@ impl<T> Compactor<T>
 where
     T: Clone + ReqValue,
 {
-    /// Returns the level (log weight) of this compactor. Test-only accessor.
-    pub(super) fn lg_weight(&self) -> u8 {
-        self.lg_weight
-    }
-
     /// Returns the current state for deterministic compaction. Test-only accessor.
     pub(super) fn state(&self) -> u64 {
         self.state
